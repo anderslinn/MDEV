@@ -1,0 +1,29 @@
+.cell {
+  border: solid 1.5px white;
+  font: 12px sans-serif;
+  line-height: 12px;
+  overflow: hidden;
+  position: absolute;
+  z-index: 0;
+}
+
+.titlehover {
+	border: solid 2px black;
+	z-index: 100;
+}
+
+#title {
+	margin-left: 10px;
+	margin-top: 10px;
+	font: 14px sans-serif;
+	font-weight: bolder;
+}
+
+#body {
+	margin-left: 10px;
+}
+
+#selectedCell {
+	background-color: black;
+	color: white;
+}
