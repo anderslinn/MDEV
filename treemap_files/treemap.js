@@ -82,7 +82,7 @@ function toggleTreeMap() {
            d3.selectAll(".cell")
              .transition()
 							.duration(1000)
-               .call(exploded_cell)
+               .call(restore_treemap2)
 							 
 					// d3.selectAll(".cell")
 							// .data(treemap)
@@ -103,19 +103,17 @@ function readDataAndRender(json)
     temp = 0;
     x = 0;
     y = 0;
-		
-		console.log(parent.treemapZoomLevel)
-		console.log(d3.entries(json))
 
 		d3.selectAll(".cell").remove()
+		
+		console.log(parent.treemapZoomLevel);
 		
     if (parent.treemapZoomLevel === 0) {
 
         div.data(d3.entries(json)).selectAll("div")
-						.data(treemap.nodes)
+						.data(treemap2)
           .enter().append("div")
-            .attr("class", "cell")
-						
+            .attr("class", "cell")	
 						
 				div.selectAll(".cell")	
 						.on("mouseover", function(d) {
@@ -128,6 +126,12 @@ function readDataAndRender(json)
                   return !d.children ? colorPickerLvl0(temp) : null;
         })			
 
+				div.selectAll(".cell")
+						.call(set_treemap2)
+						
+				div.selectAll(".cell")
+						.data(treemap)
+						
 				div.selectAll(".cell")
 						.call(set_treemap)
 				
@@ -142,7 +146,7 @@ function readDataAndRender(json)
     else {
         div.data(d3.entries(json))
 								.selectAll("div")
-                .data(treemap)
+                .data(treemap2)
                 .enter().append("div")
                 .attr("class", "cell")
                 .on("mouseover", function(d) {
@@ -154,13 +158,15 @@ function readDataAndRender(json)
                 .style("background", function(d) {
                   return !d.children ? colorPickerLvl3(temp) : null;
         })
-                .call(set_treemap)
+                .call(set_treemap2)
                 .html(function(d) {
             var tempString = d.children ? null :
                     ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
             return tempString;
         });
     }
+		
+		console.log(d3.selectAll(".cell"))
 }				
 
 function colorPickerLvl0(t) {
@@ -269,6 +275,22 @@ function restore_treemap() {
     });
 }
 
+function restore_treemap2() {
+    this
+            .style("left", function(d) {
+        return d.treemap2x + "px";
+    })
+            .style("top", function(d) {
+        return d.treemap2y + "px";
+    })
+            .style("width", function(d) {
+        return d.treemap2w - 1 + "px";
+    })
+            .style("height", function(d) {
+        return d.treemap2h - 1 + "px";
+    });
+}
+
 function zero() {
     this
             .style("left", function(d) {
@@ -286,6 +308,7 @@ function zero() {
 }
 
 function set_treemap() {
+		
     this
             .style("left", function(d) {
 						d.treemapx = d.x;
@@ -302,6 +325,27 @@ function set_treemap() {
             .style("height", function(d) {
 						d.treemaph = d.dy;
         return d.treemaph - 1 + "px";
+    });
+}
+
+function set_treemap2() {
+
+    this
+            .style("left", function(d,i) {
+						d.treemap2x = d.x;
+        return d.treemap2x + "px";
+    })
+            .style("top", function(d,i) {
+						d.treemap2y = d.y;
+        return d.treemap2y + "px";
+    })
+            .style("width", function(d,i) {
+						d.treemap2w = d.dx;
+        return d.treemap2w - 1 + "px";
+    })
+            .style("height", function(d,i) {
+						d.treemap2h = d.dy;
+        return d.treemap2h - 1 + "px";
     });
 }
 
