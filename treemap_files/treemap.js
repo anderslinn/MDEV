@@ -22,7 +22,6 @@ var mode = 0;
 var treemap = d3.layout.treemap()
         .size([w, h])
         .children(function(d) {
-    //document.writeln("d.value " + d.value + " - ");
     return isNaN(d.value) ? d3.entries(d.value) : null;
 })
         .value(function(d) {
@@ -33,7 +32,6 @@ var treemap = d3.layout.treemap()
 var treemap2 = d3.layout.treemap()
         .size([h,w])
         .children(function(d) {
-    //document.writeln("d.value " + d.value + " - ");
     return isNaN(d.value) ? d3.entries(d.value) : null;
 })
         .value(function(d) {
@@ -59,7 +57,7 @@ var div = d3.select("#chart").append("div")
 							.style("height", h + "px");
 
 function toggleTreeMap() {
-  if (parent.isRed === 0) {
+  if (parent.isTreemap === 0) {
        // d3.selectAll("div")
          // .transition()
            // .style("background","red")
@@ -74,7 +72,7 @@ function toggleTreeMap() {
 							// .transition()
 								// .call(exploded_cell)
 							
-          parent.isRed = 1;
+          parent.isTreemap = 1;
   }
     else {
        // d3.selectAll("div")
@@ -91,10 +89,9 @@ function toggleTreeMap() {
 							// .transition()
 									 
 
-         parent.isRed = 0;
+         parent.isTreemap = 0;
     }   
 }
-//readDataAndRender(eval(requestHTTP("data/clientlist.json")));
 
 function reRender() {
     readDataAndRender(parent.profileListJSON);
@@ -106,6 +103,11 @@ function readDataAndRender(json)
     temp = 0;
     x = 0;
     y = 0;
+		
+		console.log(parent.treemapZoomLevel)
+		console.log(d3.entries(json))
+
+		d3.selectAll(".cell").remove()
 		
     if (parent.treemapZoomLevel === 0) {
 
@@ -128,10 +130,6 @@ function readDataAndRender(json)
 
 				div.selectAll(".cell")
 						.call(set_treemap)
-						.call(zero)
-						.transition()
-							.duration(1000)
-							.call(restore_treemap)
 				
 				div.selectAll(".cell")
 						.html(function(d) {
@@ -156,7 +154,7 @@ function readDataAndRender(json)
                 .style("background", function(d) {
                   return !d.children ? colorPickerLvl3(temp) : null;
         })
-                .call(restore_treemap)
+                .call(set_treemap)
                 .html(function(d) {
             var tempString = d.children ? null :
                     ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
@@ -216,7 +214,7 @@ function zoom() {
 		x = 0;
 		y = 0;
 		
-    if (mode === 1)
+    if (parent.isZoom === 1)
     {
         div.selectAll(".cell")
                 .transition()
@@ -232,8 +230,8 @@ function zoom() {
             return tempString;
         });
 
-        mode = 0;
-    } else if (mode === 0) {
+        parent.isZoom = 0;
+    } else if (parent.isZoom === 0) {
 
         div.selectAll(".cell")
                 .transition()
@@ -249,7 +247,7 @@ function zoom() {
             return tempString;
         });
 								
-        mode = 1;
+        parent.isZoom = 1;
     }
 
 

@@ -47,7 +47,6 @@ function updateVisualizations()
     parent.document.getElementById('BulletChart').contentWindow.transition();
 
     // update the treeMap
-    //parent.document.getElementById('TreeMap').contentWindow.location.reload();
 		parent.document.getElementById('TreeMap').contentWindow.reRender();
 }
 

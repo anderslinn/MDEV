@@ -30,14 +30,14 @@ var gTreemapPageCompleted = false;
 
 var TREEMAP_ZOOM_LEVEL_MAX = 1;
 var treemapZoomLevel = 0;
-var isRed = 0;
+var isTreemap = 1;
+var isZoom = 0;
 
 /*
  * Read data, populate information on site, render results
  */
 function initialize()
 {
-		console.log("Made it to loadData.js")
     DDMData = readProfileDataHelper(PROFILE_DIR, DDM_DATA_FILENAME);
     priceData = readProfileDataHelper("", PRICE_DATA_FILENAME);
 
@@ -61,9 +61,7 @@ function renderVisualizations()
 
     parent.document.getElementById("TickerTable").contentWindow.reRender();
     parent.document.getElementById("BulletChart").contentWindow.reRender();
-		//parent.document.getElementById("TreeMap").contentWindow.reRender();
-		console.log("in loadData.js, renderVisualizations()");
-    parent.document.getElementById("TreeMap").contentWindow.location.reload();	// TreeMap refreshed to update visualizations. Calling reRender() does not update it.
+		parent.document.getElementById("TreeMap").contentWindow.reRender();
 }
 
 /*
@@ -71,7 +69,6 @@ function renderVisualizations()
  */
 function onProfileSelectChange()
 {
-		console.log("in loadData.js, onProfileSelectChange()")
     initializeTickerList();
     onTickerSelectChange();
 }
@@ -85,7 +82,6 @@ function onTickerSelectChange()
     parent.document.getElementById('BulletChart').contentWindow.location.reload();				// BulletChart refreshed to update visualizations. Calling reRender() does not update it.
     updateLabels();
     renderVisualizations();
-		console.log("in loadData.js, onTickerSelectChange()");
 }
 
 /* 
