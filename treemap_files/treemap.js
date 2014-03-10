@@ -27,7 +27,7 @@ var treemap = d3.layout.treemap()
         .value(function(d) {
     return Math.abs(d.value);
 })
-        .sticky(true);
+        .sticky(false);
 				
 var treemap2 = d3.layout.treemap()
         .size([h,w])
@@ -37,7 +37,7 @@ var treemap2 = d3.layout.treemap()
         .value(function(d) {
     return Math.abs(d.value);
 })
-        .sticky(true);
+        .sticky(false);
 				
 //var force = d3.layout.
 
@@ -115,17 +115,6 @@ function readDataAndRender(json)
           .enter().append("div")
             .attr("class", "cell")	
 						
-				div.selectAll(".cell")	
-						.on("mouseover", function(d) {
-            d3.select(this).classed("titlehover", true);
-        })
-            .on("mouseout", function(d) {
-            d3.select(this).classed("titlehover", false);
-        })
-            .style("background", function(d) {
-                  return !d.children ? colorPickerLvl0(temp) : null;
-        })			
-
 				div.selectAll(".cell")
 						.call(set_treemap2)
 						
@@ -134,8 +123,15 @@ function readDataAndRender(json)
 						
 				div.selectAll(".cell")
 						.call(set_treemap)
-				
-				div.selectAll(".cell")
+						.on("mouseover", function(d) {
+            d3.select(this).classed("titlehover", true);
+        })
+            .on("mouseout", function(d) {
+            d3.select(this).classed("titlehover", false);
+        })
+            .style("background", function(d) {
+                  return !d.children ? colorPickerLvl0(temp) : null;
+        })
 						.html(function(d) {
             var tempString = d.children ? null :
                     ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(x) + "<br> PoD Threshold:" + getThreshold(y) + "</div>");
@@ -144,22 +140,29 @@ function readDataAndRender(json)
             
     }
     else {
-        div.data(d3.entries(json))
-								.selectAll("div")
-                .data(treemap2)
-                .enter().append("div")
-                .attr("class", "cell")
-                .on("mouseover", function(d) {
+        div.data(d3.entries(json)).selectAll("div")
+						.data(treemap)
+          .enter().append("div")
+            .attr("class", "cell")				
+
+				div.selectAll(".cell")
+						.call(set_treemap)
+						
+				div.selectAll(".cell")
+						.data(treemap2)
+						
+				div.selectAll(".cell")
+						.call(set_treemap2)
+						.on("mouseover", function(d) {
             d3.select(this).classed("titlehover", true);
         })
-                .on("mouseout", function(d) {
+            .on("mouseout", function(d) {
             d3.select(this).classed("titlehover", false);
         })
-                .style("background", function(d) {
+            .style("background", function(d) {
                   return !d.children ? colorPickerLvl3(temp) : null;
         })
-                .call(set_treemap2)
-                .html(function(d) {
+            .html(function(d) {
             var tempString = d.children ? null :
                     ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
             return tempString;
