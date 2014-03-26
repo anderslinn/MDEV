@@ -5,6 +5,20 @@
  * treemap.js: Handles rendering of treemap visualization
  */
  
+var args = [
+						{x: 0, y: 0, w: 0, h: 0},
+						{x: 0, y: 0, w: 0, h: 0},
+						{x: 0, y: 0, w: 0, h: 0},
+						{x: 0, y: 0, w: 0, h: 0},
+						{x: 0, y: 0, w: 0, h: 0},
+						{x: 0, y: 0, w: 0, h: 0},
+						{x: 0, y: 0, w: 0, h: 0}
+						];
+						
+console.log(args);
+console.log(args[0]);
+console.log(args[0].x);
+ 
 var w = 750;
 var h = 500;
 var color = d3.scale.negativeZeroPositive;
@@ -39,8 +53,6 @@ var treemap2 = d3.layout.treemap()
 })
         .sticky(false);
 				
-//var force = d3.layout.
-
 var tree = d3.layout.tree()
 				.size([w, h])
         .children(function(d) {
@@ -54,19 +66,24 @@ var tree = d3.layout.tree()
 var div = d3.select("#chart").append("div")
 							.style("position", "relative")
 							.style("width", w + "px")
-							.style("height", h + "px");
-
+							.style("height", h + "px")
+					
+							
 function toggleTreeMap() {
   if (parent.isTreemap === 0) {
        // d3.selectAll("div")
          // .transition()
            // .style("background","red")
 
-           d3.selectAll(".cell")
-             .transition()
-							.duration(1000)
-              .call(restore_treemap)
-
+        //   d3.selectAll(".cell")
+          //   .transition()
+						//	.duration(1000)
+              //.call(restore_treemap)
+				d3.selectAll(".cell")
+					.transition()
+						.duration(1000)
+							.call(restore_force)
+							
 					// div.selectAll(".cell")
 							// .data(treemap2.nodes)
 							// .transition()
@@ -82,7 +99,7 @@ function toggleTreeMap() {
            d3.selectAll(".cell")
              .transition()
 							.duration(1000)
-               .call(restore_treemap2)
+               .call(restore_treemap)
 							 
 					// d3.selectAll(".cell")
 							// .data(treemap)
@@ -105,24 +122,18 @@ function readDataAndRender(json)
     y = 0;
 
 		d3.selectAll(".cell").remove()
-		
-		console.log(parent.treemapZoomLevel);
-		
+				
     if (parent.treemapZoomLevel === 0) {
 
         div.data(d3.entries(json)).selectAll("div")
-						.data(treemap2)
+						.data(treemap)
           .enter().append("div")
             .attr("class", "cell")	
 						
 				div.selectAll(".cell")
-						.call(set_treemap2)
-						
-				div.selectAll(".cell")
-						.data(treemap)
-						
-				div.selectAll(".cell")
 						.call(set_treemap)
+						
+				div.selectAll(".cell")
 						.on("mouseover", function(d) {
             d3.select(this).classed("titlehover", true);
         })
@@ -137,7 +148,93 @@ function readDataAndRender(json)
                     ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(x) + "<br> PoD Threshold:" + getThreshold(y) + "</div>");
             return tempString;
         });
-            
+				
+				
+        // here is the force layout
+
+        var links = [
+          {source: "Microsoft", target: "Amazon"},
+          {source: "Microsoft", target: "HTC"},
+          {source: "Samsung", target: "Apple"},
+          {source: "Motorola", target: "Apple"},
+          {source: "Nokia", target: "Apple"},
+        ];
+
+        var nodes = {};
+
+        // Compute the distinct nodes from the links.
+        links.forEach(
+            function(link)
+            {
+                link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
+                link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
+            });
+
+				var nodes2 = {};
+				var links2 = [];
+				var dt = d3.values(parent.profileListJSON)[0].Sample1;
+				
+				nodes2["AIG"] = {name: "AIG", value: dt["AIG"]};
+				nodes2["BAC"] = {name: "BAC", value: dt["BAC"]};
+				nodes2["JPM"] = {name: "JPM", value: dt["JPM"]};
+				nodes2["MS"] = {name: "MS", value: dt["MS"]};
+				nodes2["GS"] = {name: "GS", value: dt["GS"]};
+				console.log(d3.values(nodes2));
+		
+						
+        console.log(d3.values(parent.profileListJSON)[0].Sample1);
+				console.log(d3.values(nodes));
+				console.log(d3.selectAll(".cell").filter(function(d,i){return i == 0 || i == 1 ? 1 : 0}))
+				d3.selectAll(".cell").filter(function(d,i){return i == 0 || i == 1 ? 1 : 0}).attr("class","empty")
+				//d3.selectAll(".cell").slice(0,1).attr("class","empty");
+				console.log(d3.selectAll(".cell")[0])
+
+        var force = d3.layout.force()
+            .nodes(d3.selectAll(".cell")[0].slice(2))
+            .links([])
+            .size([w, h])
+            .linkDistance(20)
+						.gravity(0)
+            .charge(0)
+            .on("tick", tick)
+						.on("end", function() {
+
+								d3.selectAll(".cell")
+									.transition()
+										.duration(1000)
+										.call(set_force)
+						})
+            .start();
+
+        var link = div.selectAll(".link")
+            .data(force.links())
+            .enter().append("line")
+            .attr("class", "link");
+
+        var node = div.selectAll(".cell")
+										.data(force.nodes())
+        //    .attr("class", "node")
+        //    .on("mouseover", mouseover)
+        //    .on("mouseout", mouseout)
+        //    .call(force.drag);
+
+        //node.append(".cell")
+        //    .attr("r", 8);
+
+        //node.append("text")
+        //    .attr("x", 12)
+        //    .attr("dy", ".35em")
+        //    .text(function(d) { return d.name; });
+
+        function tick() {
+          link
+              .attr("x1", function(d) { return d.source.x; })
+              .attr("y1", function(d) { return d.source.y; })
+              .attr("x2", function(d) { return d.target.x; })
+              .attr("y2", function(d) { return d.target.y; });
+
+        node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+        }
     }
     else {
         div.data(d3.entries(json)).selectAll("div")
@@ -149,10 +246,6 @@ function readDataAndRender(json)
 						.call(set_treemap)
 						
 				div.selectAll(".cell")
-						.data(treemap2)
-						
-				div.selectAll(".cell")
-						.call(set_treemap2)
 						.on("mouseover", function(d) {
             d3.select(this).classed("titlehover", true);
         })
@@ -278,6 +371,21 @@ function restore_treemap() {
     });
 }
 
+function restore_force() {
+		this
+            .style("left", function(d) {
+        return d.forcex + "px";
+    })
+            .style("top", function(d) {
+        return d.forcey + "px";
+    })
+            .style("width", function(d) {
+        return d.forcew - 1 + "px";
+    })
+            .style("height", function(d) {
+        return d.forceh - 1 + "px";
+    });
+}
 function restore_treemap2() {
     this
             .style("left", function(d) {
@@ -313,20 +421,27 @@ function zero() {
 function set_treemap() {
 		
     this
-            .style("left", function(d) {
+            .style("left", function(d,i) {
 						d.treemapx = d.x;
+						console.log(i);
+						console.log(args);
+						console.log(args[i]);
+						args[i].x = d.treemapx;
         return d.treemapx + "px";
     })
-            .style("top", function(d) {
+            .style("top", function(d,i) {
 						d.treemapy = d.y;
+						args[i].y = d.treemapy;
         return d.treemapy + "px";
     })
-            .style("width", function(d) {
+            .style("width", function(d,i) {
 						d.treemapw = d.dx;
+						args[i].w = d.treemapw
         return d.treemapw - 1 + "px";
     })
-            .style("height", function(d) {
+            .style("height", function(d,i) {
 						d.treemaph = d.dy;
+						args[i].h = d.treemaph
         return d.treemaph - 1 + "px";
     });
 }
@@ -371,4 +486,33 @@ function exploded_cell() {
         return d.dy - 1 + "px";
     });
 }
+
+function set_force() {
+		
+    this
+            
+            .style("width", function(d,i) {
+						d.treemapw = args[i].w
+						d.forcew = d.treemapw/2
+        return d.treemapw - 1 + "px";
+    })
+            .style("height", function(d,i) {
+						d.treemaph = args[i].h
+						d.forceh = d.treemaph/2
+        return d.treemaph - 1 + "px";
+    })
+		.style("left", function(d,i) {
+						d.treemapx = args[i].x
+						console.log(d.treemapx)
+						d.forcex = d.x - d.forcew/2
+						console.log(d.forcex)
+        return d.treemapx + "px";
+    })
+            .style("top", function(d,i) {
+						d.treemapy = args[i].y
+						d.forcey = d.y - d.forceh/2
+        return d.treemapy + "px";
+    });
+}
+
 //reRender();
