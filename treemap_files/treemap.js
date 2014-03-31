@@ -32,12 +32,20 @@ var mode = 0;
 var treemap = d3.layout.treemap()
         .size([w, h])
         .children(function(d) {
-    return isNaN(d.value) ? d3.entries(d.value) : null;
-})
+						return isNaN(d.value) ? d3.entries(d.value) : null;
+				})
         .value(function(d) {
-    return Math.abs(d.value);
-})
+						return Math.abs(d.value);
+				})
         .sticky(false);
+				
+var force = d3.layout.force()
+								.size([w, h])
+								.on("end", function() {
+
+										d3.selectAll(".cell")
+											.call(set_force)
+								})				
 
 var div = d3.select("#chart").append("div")
 							.style("position", "relative")
@@ -47,39 +55,20 @@ var div = d3.select("#chart").append("div")
 							
 function toggleTreeMap() {
   if (parent.isTreemap === 0) {
-       // d3.selectAll("div")
-         // .transition()
-           // .style("background","red")
 
-        //   d3.selectAll(".cell")
-          //   .transition()
-						//	.duration(1000)
-              //.call(restore_treemap)
 				d3.selectAll(".cell")
 					.transition()
 						.duration(1000)
 							.call(restore_treemap)
 							
-					// div.selectAll(".cell")
-							// .data(treemap2.nodes)
-							// .transition()
-								// .call(exploded_cell)
-							
           parent.isTreemap = 1;
   }
     else {
-       // d3.selectAll("div")
-         // .transition()
-           // .style("background","green")
         
            d3.selectAll(".cell")
              .transition()
 							.duration(1000)
                .call(restore_force)
-							 
-					// d3.selectAll(".cell")
-							// .data(treemap)
-							// .transition()
 									 
 
          parent.isTreemap = 0;
@@ -165,49 +154,29 @@ function readDataAndRender(json)
 		nodes2["JPM"] = {name: "JPM", value: dt["JPM"]};
 		nodes2["MS"] = {name: "MS", value: dt["MS"]};
 		nodes2["GS"] = {name: "GS", value: dt["GS"]};
-
-		var force = d3.layout.force()
-				.nodes(d3.selectAll(".cell")[0])
+	
+		force.nodes(d3.selectAll(".cell")[0])
 				.links([])
-				.size([w, h])
-				.alpha(.05)
 				.on("tick", tick)
-				.on("end", function() {
-
-						d3.selectAll(".cell")
-							.call(set_force)
-				})
 				.start();
 
 		var link = div.selectAll(".link")
-				.data(force.links())
-				.enter().append("line")
-				.attr("class", "link");
-
+								.data(force.links())
+								.enter().append("line")
+								.attr("class", "link");		
+				
 		var node = div.selectAll(".cell")
 								.data(force.nodes())
-		//    .attr("class", "node")
-		//    .on("mouseover", mouseover)
-		//    .on("mouseout", mouseout)
-		//    .call(force.drag);
-
-		//node.append(".cell")
-		//    .attr("r", 8);
-
-		//node.append("text")
-		//    .attr("x", 12)
-		//    .attr("dy", ".35em")
-		//    .text(function(d) { return d.name; });
-
+								
 		function tick() {
 			link
 					.attr("x1", function(d) { return d.source.x; })
 					.attr("y1", function(d) { return d.source.y; })
 					.attr("x2", function(d) { return d.target.x; })
 					.attr("y2", function(d) { return d.target.y; });
-
-		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-		}
+	
+			node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+		}						
 }				
 
 function colorPickerLvl0(t) {
@@ -396,5 +365,5 @@ function set_force() {
 						d.forcey = d.y - d.forceh/2
         return d.treemapy + "px";
     })
-
 }
+
