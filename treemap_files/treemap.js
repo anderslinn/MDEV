@@ -14,10 +14,6 @@ var args = [
 						{x: 0, y: 0, w: 0, h: 0},
 						{x: 0, y: 0, w: 0, h: 0}
 						];
-						
-console.log(args);
-console.log(args[0]);
-console.log(args[0].x);
  
 var w = 750;
 var h = 500;
@@ -103,146 +99,131 @@ function readDataAndRender(json)
 
 		d3.selectAll(".cell").remove()
 				
-    if (parent.treemapZoomLevel === 0) {
+    
 
-        div.data(d3.entries(json)).selectAll("div")
-						.data(treemap)
-          .enter().append("div")
-            .attr("class", "cell")	
-						
-				div.selectAll(".cell")
-						.call(set_treemap)
-						
-				div.selectAll(".cell")
-						.on("mouseover", function(d) {
-            d3.select(this).classed("titlehover", true);
-        })
-            .on("mouseout", function(d) {
-            d3.select(this).classed("titlehover", false);
-        })
-            .style("background", function(d) {
-                  return !d.children ? colorPickerLvl0(temp) : null;
-        })
-						.html(function(d) {
-            var tempString = d.children ? null :
-                    ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(x) + "<br> PoD Threshold:" + getThreshold(y) + "</div>");
-            return tempString;
-        });
+		div.data(d3.entries(json)).selectAll("div")
+				.data(treemap)
+			.enter().append("div")
+				.attr("class", "cell")	
 				
+		d3.selectAll(".cell").filter(function(d,i){return i == 0 || i == 1 ? 1 : 0}).attr("class","empty")		
 				
-        // here is the force layout
-
-        var links = [
-          {source: "Microsoft", target: "Amazon"},
-          {source: "Microsoft", target: "HTC"},
-          {source: "Samsung", target: "Apple"},
-          {source: "Motorola", target: "Apple"},
-          {source: "Nokia", target: "Apple"},
-        ];
-
-        var nodes = {};
-
-        // Compute the distinct nodes from the links.
-        links.forEach(
-            function(link)
-            {
-                link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
-                link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
-            });
-
-				var nodes2 = {};
-				var links2 = [];
-				var dt = d3.values(parent.profileListJSON)[0].Sample1;
+		div.selectAll(".cell")
+				.call(set_treemap)
 				
-				nodes2["AIG"] = {name: "AIG", value: dt["AIG"]};
-				nodes2["BAC"] = {name: "BAC", value: dt["BAC"]};
-				nodes2["JPM"] = {name: "JPM", value: dt["JPM"]};
-				nodes2["MS"] = {name: "MS", value: dt["MS"]};
-				nodes2["GS"] = {name: "GS", value: dt["GS"]};
-				console.log(d3.values(nodes2));
+						// attributes 
 		
-						
-        console.log(d3.values(parent.profileListJSON)[0].Sample1);
-				console.log(d3.values(nodes));
-				console.log(d3.selectAll(".cell").filter(function(d,i){return i == 0 || i == 1 ? 1 : 0}))
-				d3.selectAll(".cell").filter(function(d,i){return i == 0 || i == 1 ? 1 : 0}).attr("class","empty")
-				//d3.selectAll(".cell").slice(0,1).attr("class","empty");
-				console.log(d3.selectAll(".cell")[0])
+		div.selectAll(".cell")
+				.on("mouseover", function(d) {
+				d3.select(this).classed("titlehover", true);
+		})
+				.on("mouseout", function(d) {
+				d3.select(this).classed("titlehover", false);
+		})
+				
+	if (parent.treemapZoomLevel === 0) {
+		div.selectAll(".cell")
+				.style("background", function(d) {
+							return !d.children ? colorPickerLvl0(temp) : null;
+		})
+				.html(function(d) {
+				var tempString = d.children ? null :
+								("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(x) + "<br> PoD Threshold:" + getThreshold(y) + "</div>");
+				return tempString;
+		});
+	} else {
+		div.selectAll(".cell")
+			.style("background", function(d) {
+							return !d.children ? colorPickerLvl3(temp) : null;
+		})
+				.html(function(d) {
+				var tempString = d.children ? null :
+								("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
+				return tempString;
+		});
+	}
+		// here is the force layout
 
-        var force = d3.layout.force()
-            .nodes(d3.selectAll(".cell")[0].slice(2))
-            .links([])
-            .size([w, h])
-            .linkDistance(20)
-						.gravity(0)
-            .charge(0)
-            .on("tick", tick)
-						.on("end", function() {
+		var links = [
+			{source: "Microsoft", target: "Amazon"},
+			{source: "Microsoft", target: "HTC"},
+			{source: "Samsung", target: "Apple"},
+			{source: "Motorola", target: "Apple"},
+			{source: "Nokia", target: "Apple"},
+		];
 
-								d3.selectAll(".cell")
-									.transition()
-										.duration(1000)
-										.call(set_force)
-						})
-            .start();
+		var nodes = {};
 
-        var link = div.selectAll(".link")
-            .data(force.links())
-            .enter().append("line")
-            .attr("class", "link");
+		// Compute the distinct nodes from the links.
+		links.forEach(
+				function(link)
+				{
+						link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
+						link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
+				});
 
-        var node = div.selectAll(".cell")
-										.data(force.nodes())
-        //    .attr("class", "node")
-        //    .on("mouseover", mouseover)
-        //    .on("mouseout", mouseout)
-        //    .call(force.drag);
-
-        //node.append(".cell")
-        //    .attr("r", 8);
-
-        //node.append("text")
-        //    .attr("x", 12)
-        //    .attr("dy", ".35em")
-        //    .text(function(d) { return d.name; });
-
-        function tick() {
-          link
-              .attr("x1", function(d) { return d.source.x; })
-              .attr("y1", function(d) { return d.source.y; })
-              .attr("x2", function(d) { return d.target.x; })
-              .attr("y2", function(d) { return d.target.y; });
-
-        node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-        }
-    }
-    else {
-        div.data(d3.entries(json)).selectAll("div")
-						.data(treemap)
-          .enter().append("div")
-            .attr("class", "cell")				
-
-				div.selectAll(".cell")
-						.call(set_treemap)
-						
-				div.selectAll(".cell")
-						.on("mouseover", function(d) {
-            d3.select(this).classed("titlehover", true);
-        })
-            .on("mouseout", function(d) {
-            d3.select(this).classed("titlehover", false);
-        })
-            .style("background", function(d) {
-                  return !d.children ? colorPickerLvl3(temp) : null;
-        })
-            .html(function(d) {
-            var tempString = d.children ? null :
-                    ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
-            return tempString;
-        });
-    }
+		var nodes2 = {};
+		var links2 = [];
+		var dt = d3.values(parent.profileListJSON)[0].Sample1;
 		
-		console.log(d3.selectAll(".cell"))
+		nodes2["AIG"] = {name: "AIG", value: dt["AIG"]};
+		nodes2["BAC"] = {name: "BAC", value: dt["BAC"]};
+		nodes2["JPM"] = {name: "JPM", value: dt["JPM"]};
+		nodes2["MS"] = {name: "MS", value: dt["MS"]};
+		nodes2["GS"] = {name: "GS", value: dt["GS"]};
+		console.log(d3.values(nodes2));
+
+				
+		console.log(d3.values(parent.profileListJSON)[0].Sample1);
+		console.log(d3.values(nodes));
+		console.log(d3.selectAll(".cell").filter(function(d,i){return i == 0 || i == 1 ? 1 : 0}))
+		//d3.selectAll(".cell").slice(0,1).attr("class","empty");
+		console.log(d3.selectAll(".cell")[0])
+
+		var force = d3.layout.force()
+				.nodes(d3.selectAll(".cell")[0])
+				.links([])
+				.size([w, h])
+				.linkDistance(20)
+				.gravity(0)
+				.charge(0)
+				.on("tick", tick)
+				.on("end", function() {
+
+						d3.selectAll(".cell")
+							.call(set_force)
+				})
+				.start();
+
+		var link = div.selectAll(".link")
+				.data(force.links())
+				.enter().append("line")
+				.attr("class", "link");
+
+		var node = div.selectAll(".cell")
+								.data(force.nodes())
+		//    .attr("class", "node")
+		//    .on("mouseover", mouseover)
+		//    .on("mouseout", mouseout)
+		//    .call(force.drag);
+
+		//node.append(".cell")
+		//    .attr("r", 8);
+
+		//node.append("text")
+		//    .attr("x", 12)
+		//    .attr("dy", ".35em")
+		//    .text(function(d) { return d.name; });
+
+		function tick() {
+			link
+					.attr("x1", function(d) { return d.source.x; })
+					.attr("y1", function(d) { return d.source.y; })
+					.attr("x2", function(d) { return d.target.x; })
+					.attr("y2", function(d) { return d.target.y; });
+
+		node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+		}
 }				
 
 function colorPickerLvl0(t) {
@@ -366,21 +347,6 @@ function restore_force() {
         return d.forceh - 1 + "px";
     });
 }
-function restore_treemap2() {
-    this
-            .style("left", function(d) {
-        return d.treemap2x + "px";
-    })
-            .style("top", function(d) {
-        return d.treemap2y + "px";
-    })
-            .style("width", function(d) {
-        return d.treemap2w - 1 + "px";
-    })
-            .style("height", function(d) {
-        return d.treemap2h - 1 + "px";
-    });
-}
 
 function zero() {
     this
@@ -403,9 +369,6 @@ function set_treemap() {
     this
             .style("left", function(d,i) {
 						d.treemapx = d.x;
-						console.log(i);
-						console.log(args);
-						console.log(args[i]);
 						args[i].x = d.treemapx;
         return d.treemapx + "px";
     })
@@ -426,73 +389,28 @@ function set_treemap() {
     });
 }
 
-function set_treemap2() {
-
-    this
-            .style("left", function(d,i) {
-						d.treemap2x = d.x;
-        return d.treemap2x + "px";
-    })
-            .style("top", function(d,i) {
-						d.treemap2y = d.y;
-        return d.treemap2y + "px";
-    })
-            .style("width", function(d,i) {
-						d.treemap2w = d.dx;
-        return d.treemap2w - 1 + "px";
-    })
-            .style("height", function(d,i) {
-						d.treemap2h = d.dy;
-        return d.treemap2h - 1 + "px";
-    });
-}
-
-function exploded_cell() {
-    this
-            .style("left", function(d) {
-						d.x = 2*d.x;
-        return d.x + "px";
-    })
-            .style("top", function(d) {
-						d.y = 2*d.y
-        return -400 + d.y + "px";
-    })
-            .style("width", function(d) {
-						d.dx = d.dx/3;
-        return d.dx - 1 + "px";
-    })
-            .style("height", function(d) {
-						d.dy = d.dy/3
-        return d.dy - 1 + "px";
-    });
-}
-
 function set_force() {
 		
-    this
-            
+    this  
             .style("width", function(d,i) {
 						d.treemapw = args[i].w
-						d.forcew = d.treemapw/2
+						d.forcew = 150;
         return d.treemapw - 1 + "px";
     })
             .style("height", function(d,i) {
 						d.treemaph = args[i].h
-						d.forceh = d.treemaph/2
+						d.forceh = 80;
         return d.treemaph - 1 + "px";
     })
 		.style("left", function(d,i) {
 						d.treemapx = args[i].x
-						console.log(d.treemapx)
 						d.forcex = d.x - d.forcew/2
-						console.log(d.forcex)
         return d.treemapx + "px";
     })
             .style("top", function(d,i) {
 						d.treemapy = args[i].y
 						d.forcey = d.y - d.forceh/2
         return d.treemapy + "px";
-    });
-}
+    })
 
-//reRender();
+}
