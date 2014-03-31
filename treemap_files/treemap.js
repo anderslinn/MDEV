@@ -41,6 +41,8 @@ var treemap = d3.layout.treemap()
 				
 var force = d3.layout.force()
 								.size([w, h])
+								.charge(-2000)
+								.linkDistance(300)
 								.on("end", function() {
 
 										d3.selectAll(".cell")
@@ -48,10 +50,14 @@ var force = d3.layout.force()
 								})				
 
 var div = d3.select("#chart").append("div")
-							.style("position", "relative")
+							.style("position", "absolute")
 							.style("width", w + "px")
 							.style("height", h + "px")
-					
+
+var svg = d3.select("body").append("svg")
+							.attr("width",w)
+							.attr("height",h)
+							.style("position","absolute")
 							
 function toggleTreeMap() {
   if (parent.isTreemap === 0) {
@@ -149,22 +155,34 @@ function readDataAndRender(json)
 		var links2 = [];
 		var dt = d3.values(parent.profileListJSON)[0].Sample1;
 		
+
+		
 		nodes2["AIG"] = {name: "AIG", value: dt["AIG"]};
 		nodes2["BAC"] = {name: "BAC", value: dt["BAC"]};
 		nodes2["JPM"] = {name: "JPM", value: dt["JPM"]};
 		nodes2["MS"] = {name: "MS", value: dt["MS"]};
 		nodes2["GS"] = {name: "GS", value: dt["GS"]};
 	
+		console.log(links)
+		console.log([{source: "AIG", target: "BAC"}]);
+		console.log(nodes)
+		console.log(nodes2)
+	
 		force.nodes(d3.selectAll(".cell")[0])
-				.links([])
+				.links([{source: 0, target: 1}])
 				.on("tick", tick)
 				.start();
 
-		var link = div.selectAll(".link")
-								.data(force.links())
+		var link = svg.selectAll("line")
+									.data(force.links())
 								.enter().append("line")
-								.attr("class", "link");		
-				
+									.attr("x1", function(d) { return d.source.x; })
+									.attr("y1", function(d) { return d.source.y; })
+									.attr("x2", function(d) { return d.target.x; })
+									.attr("y2", function(d) { return d.target.y; })
+									.style("stroke","black")
+									.style("stroke-width", "1.5px")
+								
 		var node = div.selectAll(".cell")
 								.data(force.nodes())
 								
@@ -366,4 +384,3 @@ function set_force() {
         return d.treemapy + "px";
     })
 }
-

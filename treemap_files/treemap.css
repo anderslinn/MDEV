@@ -4,7 +4,7 @@
   line-height: 12px;
   overflow: hidden;
   position: absolute;
-  z-index: 0;
+  z-index: 1;
 }
 
 .titlehover {
