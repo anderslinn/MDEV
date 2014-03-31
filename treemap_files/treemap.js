@@ -42,26 +42,6 @@ var treemap = d3.layout.treemap()
     return Math.abs(d.value);
 })
         .sticky(false);
-				
-var treemap2 = d3.layout.treemap()
-        .size([h,w])
-        .children(function(d) {
-    return isNaN(d.value) ? d3.entries(d.value) : null;
-})
-        .value(function(d) {
-    return Math.abs(d.value);
-})
-        .sticky(false);
-				
-var tree = d3.layout.tree()
-				.size([w, h])
-        .children(function(d) {
-    //document.writeln("d.value " + d.value + " - ");
-    return isNaN(d.value) ? d3.entries(d.value) : null;
-})
-        .value(function(d) {
-    return Math.abs(d.value);
-})
 
 var div = d3.select("#chart").append("div")
 							.style("position", "relative")
@@ -82,7 +62,7 @@ function toggleTreeMap() {
 				d3.selectAll(".cell")
 					.transition()
 						.duration(1000)
-							.call(restore_force)
+							.call(restore_treemap)
 							
 					// div.selectAll(".cell")
 							// .data(treemap2.nodes)
@@ -99,7 +79,7 @@ function toggleTreeMap() {
            d3.selectAll(".cell")
              .transition()
 							.duration(1000)
-               .call(restore_treemap)
+               .call(restore_force)
 							 
 					// d3.selectAll(".cell")
 							// .data(treemap)
