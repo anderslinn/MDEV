@@ -14,7 +14,9 @@ var args = [
 						{x: 0, y: 0, w: 0, h: 0},
 						{x: 0, y: 0, w: 0, h: 0}
 						];
- 
+
+var links;
+						
 var w = 750;
 var h = 500;
 var color = d3.scale.negativeZeroPositive;
@@ -54,7 +56,7 @@ var div = d3.select("#chart").append("div")
 							.style("width", w + "px")
 							.style("height", h + "px")
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("body").insert("svg","#chart")
 							.attr("width",w)
 							.attr("height",h)
 							.style("position","absolute")
@@ -62,20 +64,34 @@ var svg = d3.select("body").append("svg")
 function toggleTreeMap() {
   if (parent.isTreemap === 0) {
 
-				d3.selectAll(".cell")
+				d3.selectAll("line")
 					.transition()
-						.duration(1000)
-							.call(restore_treemap)
+							.each("end", function() {
+									d3.selectAll(".cell")
+										.transition()
+											.duration(1000)
+												.call(restore_treemap)
+							})
+							.duration(1000)
+								.call(hide_links)
+								
+				
+					
 							
           parent.isTreemap = 1;
   }
     else {
-        
-           d3.selectAll(".cell")
+								
+					d3.selectAll(".cell")
              .transition()
+							 .each("end", function() {
+										d3.selectAll("line")
+											.transition()
+												.duration(1000)
+													.call(show_links)
+								})
 							.duration(1000)
                .call(restore_force)
-									 
 
          parent.isTreemap = 0;
     }   
@@ -104,7 +120,7 @@ function readDataAndRender(json)
 		div.selectAll(".cell")
 				.call(set_treemap)
 				
-						// attributes 
+		// attributes 
 		
 		div.selectAll(".cell")
 				.on("mouseover", function(d) {
@@ -133,43 +149,10 @@ function readDataAndRender(json)
 		
 		// here is the force layout
 
-		var links = [
-			{source: "Microsoft", target: "Amazon"},
-			{source: "Microsoft", target: "HTC"},
-			{source: "Samsung", target: "Apple"},
-			{source: "Motorola", target: "Apple"},
-			{source: "Nokia", target: "Apple"},
-		];
-
-		var nodes = {};
-
-		// Compute the distinct nodes from the links.
-		links.forEach(
-				function(link)
-				{
-						link.source = nodes[link.source] || (nodes[link.source] = {name: link.source});
-						link.target = nodes[link.target] || (nodes[link.target] = {name: link.target});
-				});
-
-		var nodes2 = {};
-		var links2 = [];
-		var dt = d3.values(parent.profileListJSON)[0].Sample1;
+		links = [{source: 0, target: 1},{source: 0, target: 3},{source: 1, target: 2}];
 		
-
-		
-		nodes2["AIG"] = {name: "AIG", value: dt["AIG"]};
-		nodes2["BAC"] = {name: "BAC", value: dt["BAC"]};
-		nodes2["JPM"] = {name: "JPM", value: dt["JPM"]};
-		nodes2["MS"] = {name: "MS", value: dt["MS"]};
-		nodes2["GS"] = {name: "GS", value: dt["GS"]};
-	
-		console.log(links)
-		console.log([{source: "AIG", target: "BAC"}]);
-		console.log(nodes)
-		console.log(nodes2)
-	
 		force.nodes(d3.selectAll(".cell")[0])
-				.links([{source: 0, target: 1}])
+				.links(links)
 				.on("tick", tick)
 				.start();
 
@@ -180,8 +163,9 @@ function readDataAndRender(json)
 									.attr("y1", function(d) { return d.source.y; })
 									.attr("x2", function(d) { return d.target.x; })
 									.attr("y2", function(d) { return d.target.y; })
-									.style("stroke","black")
+									.style("stroke","#FC8D59")
 									.style("stroke-width", "1.5px")
+									.style("opacity",0)
 								
 		var node = div.selectAll(".cell")
 								.data(force.nodes())
@@ -383,4 +367,16 @@ function set_force() {
 						d.forcey = d.y - d.forceh/2
         return d.treemapy + "px";
     })
+}
+
+function show_links() {
+	
+		this.style("opacity",100)
+		
+}
+
+function hide_links() {
+
+		this.style("opacity",0)
+		
 }
