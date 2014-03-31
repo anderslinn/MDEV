@@ -6,13 +6,13 @@
  */
  
 var args = [
-						{x: 0, y: 0, w: 0, h: 0},
-						{x: 0, y: 0, w: 0, h: 0},
-						{x: 0, y: 0, w: 0, h: 0},
-						{x: 0, y: 0, w: 0, h: 0},
-						{x: 0, y: 0, w: 0, h: 0},
-						{x: 0, y: 0, w: 0, h: 0},
-						{x: 0, y: 0, w: 0, h: 0}
+						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
+						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
+						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
+						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
+						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
+						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
+						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0}
 						];
 
 var links;
@@ -134,13 +134,13 @@ function readDataAndRender(json)
 						else { return !d.children ? colorPickerLvl3(temp) : null;}
 							return !d.children ? colorPickerLvl0(temp) : null;
 		})
-				.html(function(d) {
+				.html(function(d,i) {
 				if (parent.treemapZoomLevel === 0) {
 					var tempString = d.children ? null :
-								("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(x) + "<br> PoD Threshold:" + getThreshold(y) + "</div>");
+								("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(i) + "<br> PoD Threshold:" + getThreshold(i) + "</div>");
 				} else {
 				var tempString = d.children ? null :
-                ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
+                ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(i) + "<br> DDM Threshold: 0.2 </div>");
 				}
 				
 				return tempString;
@@ -150,6 +150,8 @@ function readDataAndRender(json)
 		// here is the force layout
 
 		links = [{source: 0, target: 1},{source: 0, target: 3},{source: 1, target: 2}];
+		
+		console.log(d3.selectAll(".cell")[0])
 		
 		force.nodes(d3.selectAll(".cell")[0])
 				.links(links)
@@ -169,6 +171,7 @@ function readDataAndRender(json)
 								
 		var node = div.selectAll(".cell")
 								.data(force.nodes())
+								.each(function(d,i) {set_args(d,i)});
 								
 		function tick() {
 			link
@@ -212,25 +215,19 @@ function colorPickerLvl3(t) {
 }
 
 function getDDM(t) {
-    x++;
     var tempEntity = $("#TickerSelect", window.parent.document).val();
     return parent.DDMData[t][tempEntity];
 }
 
 function getPod(t) {
-    x++;
     return parent.visualizationData[t].holdings;
 }
 
 function getThreshold(t) {
-    y++;
     return parent.visualizationData[t].goal;
 }
 
 function zoom() {
-		temp = 0;
-		x = 0;
-		y = 0;
 		
     if (parent.isZoom === 1)
     {
@@ -238,14 +235,19 @@ function zoom() {
                 .transition()
 									.duration(500)
 								.style("background", function(d,i) {
-									return !d.children ? colorPickerLvl0(temp) : null;
+									return colorPickerLvl0(i);
 								})
 								
 				div.selectAll(".cell")
-								.html(function(d) {
-            var tempString = d.children ? null :
-                    ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(x) + "<br> PoD Threshold:" + getThreshold(y) + "</div>");
-            return tempString;
+								.html(function(d,i) {
+									console.log("item " + i)
+									console.log("key " + d.key)
+									console.log("value " + d.value)
+                  return "<div id=title>" + d.key + "</div>" +
+												 "<div id=body> Market Cap:" + Math.abs(d.value) + 
+												 "B <br> PoD Value:" + getPod(i) + 
+												 "<br> PoD Threshold:" + getThreshold(i) + 
+												 "</div>";
         });
 
         parent.isZoom = 0;
@@ -255,14 +257,18 @@ function zoom() {
                 .transition()
                 .duration(500)
                 .style("background", function(d,i) {
-									return !d.children ? colorPickerLvl3(temp) : null;
+									return colorPickerLvl3(i);
 								})
 								
 				div.selectAll(".cell")
-								.html(function(d) {
-            var tempString = d.children ? null :
-                    ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
-            return tempString;
+								.html(function(d,i) {
+									console.log("item " + i)
+									console.log("key " + d.key)
+									console.log("value " + d.value)
+                  return "<div id=title>" + d.key + "</div>" + 
+												 "<div id=body> Market Cap:" + Math.abs(d.value) + 
+												 "B <br> Relative DDM:" + getDDM(i) + 
+												 "<br> DDM Threshold: 0.2 </div>";
         });
 								
         parent.isZoom = 1;
@@ -303,28 +309,14 @@ function restore_force() {
     });
 }
 
-function zero() {
-    this
-            .style("left", function(d) {
-        return d.treemapx + "px";
-    })
-            .style("top", function(d) {
-        return d.treemapy + "px";
-    })
-            .style("width", function(d) {
-        return 0 + "px";
-    })
-            .style("height", function(d) {
-        return 0 + "px";
-    });
-}
-
 function set_treemap() {
 		
     this
             .style("left", function(d,i) {
 						d.treemapx = d.x;
 						args[i].x = d.treemapx;
+						args[i].key = d.key;
+						args[i].value = d.value;
         return d.treemapx + "px";
     })
             .style("top", function(d,i) {
@@ -348,26 +340,38 @@ function set_force() {
 		
     this  
             .style("width", function(d,i) {
-						d.treemapw = args[i].w
+
 						d.forcew = 150;
         return d.treemapw - 1 + "px";
     })
             .style("height", function(d,i) {
-						d.treemaph = args[i].h
+						
 						d.forceh = 80;
         return d.treemaph - 1 + "px";
     })
 		.style("left", function(d,i) {
-						d.treemapx = args[i].x
+						
 						d.forcex = d.x - d.forcew/2
         return d.treemapx + "px";
     })
             .style("top", function(d,i) {
-						d.treemapy = args[i].y
+						
 						d.forcey = d.y - d.forceh/2
         return d.treemapy + "px";
     })
 }
+
+function set_args(d,i) {
+		
+				d.treemapy = args[i].y
+				d.treemapx = args[i].x
+				d.treemapw = args[i].w
+				d.treemaph = args[i].h
+				d.key = args[i].key
+				d.value = args[i].value
+
+}
+
 
 function show_links() {
 	
@@ -380,3 +384,4 @@ function hide_links() {
 		this.style("opacity",0)
 		
 }
+
