@@ -95,12 +95,15 @@
 
         <br />
 
-        <div>
+        <div id="cols">
             <div id="col">
-                <iframe frameborder="0" width="800" height="800" longdesc="treemap.html" id="TreeMap" scrolling="no" src="treemap.html"></iframe>
-                <iframe frameborder="0" width="280" height="800" longdesc="tickertable.html" id="TickerTable" scrolling="no" src="tickertable.html"></iframe>
-                <iframe frameborder="0" width="280" height="800" longdesc="bulletchart.html" id="BulletChart" scrolling="no" src="bulletchart.html"></iframe>
+                <iframe frameborder="0" width="800" height="500" longdesc="treemap.html" id="TreeMap" scrolling="no" src="treemap.html"></iframe>
             </div>
+						<div id="col2">
+								<iframe frameborder="0" width="280" height="192" longdesc="tickertable.html" id="TickerTable" scrolling="no" src="tickertable.html"></iframe>
+								<iframe frameborder="0" width="280" height="166" longdesc="bulletchart.html" id="BulletChart" scrolling="no" src="bulletchart.html"></iframe>
+								<span id="credits" style="font-size: 8px">Fixed Income Web VA Tool v0.9; (c) 2011 CIFER Research; Designed by Thomas Dang; D3js courtesy Michael Bostock; Complete acknowledgement in credit.txt</span>
+						</div>
         </div>
         
         <script type="text/javascript">

@@ -17,4 +17,7 @@ span.size14head {font-weight:normal; font-size: 14px; background-color:#cccccc;}
 th.size14head {font-weight:bold; font-size: 14px; background-color:#cccccc;}
 tr.size14head {font-weight:bold; font-size: 14px; background-color:#cccccc;}
 
-#col {padding-right: 1em; display:inline-block; float:left;}
+#col {padding-right: 1em; display:inline-block; float: left;}
+#TickerTable {float: left;}
+#BulletChart {float: left;}
+#credits {float: left; display: block;}
