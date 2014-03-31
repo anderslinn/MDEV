@@ -99,8 +99,6 @@ function readDataAndRender(json)
 
 		d3.selectAll(".cell").remove()
 				
-    
-
 		div.data(d3.entries(json)).selectAll("div")
 				.data(treemap)
 			.enter().append("div")
@@ -120,28 +118,24 @@ function readDataAndRender(json)
 				.on("mouseout", function(d) {
 				d3.select(this).classed("titlehover", false);
 		})
-				
-	if (parent.treemapZoomLevel === 0) {
-		div.selectAll(".cell")
 				.style("background", function(d) {
+						if (parent.treemapZoomLevel === 0) { return !d.children ? colorPickerLvl0(temp) : null;}
+						else { return !d.children ? colorPickerLvl3(temp) : null;}
 							return !d.children ? colorPickerLvl0(temp) : null;
 		})
 				.html(function(d) {
-				var tempString = d.children ? null :
+				if (parent.treemapZoomLevel === 0) {
+					var tempString = d.children ? null :
 								("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> PoD Value:" + getPod(x) + "<br> PoD Threshold:" + getThreshold(y) + "</div>");
-				return tempString;
-		});
-	} else {
-		div.selectAll(".cell")
-			.style("background", function(d) {
-							return !d.children ? colorPickerLvl3(temp) : null;
-		})
-				.html(function(d) {
+				} else {
 				var tempString = d.children ? null :
-								("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
+                ("<div id=title>" + d.key + "</div><div id=body> Market Cap:" + Math.abs(d.value) + "B <br> Relative DDM:" + getDDM(x) + "<br> DDM Threshold: 0.2 </div>");
+				}
+				
 				return tempString;
+				
 		});
-	}
+		
 		// here is the force layout
 
 		var links = [
@@ -171,22 +165,12 @@ function readDataAndRender(json)
 		nodes2["JPM"] = {name: "JPM", value: dt["JPM"]};
 		nodes2["MS"] = {name: "MS", value: dt["MS"]};
 		nodes2["GS"] = {name: "GS", value: dt["GS"]};
-		console.log(d3.values(nodes2));
-
-				
-		console.log(d3.values(parent.profileListJSON)[0].Sample1);
-		console.log(d3.values(nodes));
-		console.log(d3.selectAll(".cell").filter(function(d,i){return i == 0 || i == 1 ? 1 : 0}))
-		//d3.selectAll(".cell").slice(0,1).attr("class","empty");
-		console.log(d3.selectAll(".cell")[0])
 
 		var force = d3.layout.force()
 				.nodes(d3.selectAll(".cell")[0])
 				.links([])
 				.size([w, h])
-				.linkDistance(20)
-				.gravity(0)
-				.charge(0)
+				.alpha(.05)
 				.on("tick", tick)
 				.on("end", function() {
 
