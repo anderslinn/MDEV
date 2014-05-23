@@ -54,6 +54,9 @@ var args = [
 // holds the links for the force-directed layout
 var links;
 
+// indicates when the force layout is loaded and ready to view
+var force_loaded = false;
+
 // basic treemap layout
 var treemap = d3.layout.treemap()
         .size([w, h])
@@ -68,14 +71,20 @@ var treemap = d3.layout.treemap()
 // basic force layout
 var force = d3.layout.force()
 								.size([w, h])
-								.charge(-2000)
+								.charge(-10000)
+								.friction(.8)
 								.linkDistance(300)
 								.on("end", function(d) {
 							
+									force_loaded = true;
 									// set the locations determined by the force layout
 									d3.selectAll(".cell")
 											.call(set_force)
-								})				
+								})	
+								.on("start", function() {
+										// runs for 2.5 sec; contagion graph is unavaible until completion
+										window.setTimeout(force.stop, 500);
+								})
 
 // container for the cells
 var div = d3.select("#chart").append("div")
@@ -106,7 +115,7 @@ function toggleTreeMap() {
 								.call(hide_links)
 	
           parent.isTreemap = 1;
-  } else {
+  } else if(force_loaded == true) {
 								
 					// move the cells to their exploded position and then draw links
 					d3.selectAll(".cell")
@@ -121,7 +130,11 @@ function toggleTreeMap() {
                .call(restore_force)
 
          parent.isTreemap = 0;
-    }   
+    } else {
+					
+					// alert the user if the force layout isn't ready yet
+					alert("The contagion graph is still being calculated!");
+		}
 }
 
 function toggleTicker() {
@@ -249,10 +262,6 @@ function readDataAndRender(json)
 		force.nodes(d3.selectAll(".cell")[0])
 				.links(links)
 				.on("tick", tick)
-				.on("start", function() {
-						// runs for 2.5 sec; contagion graph is unavaible until completion
-						window.setTimeout(force.stop, 2500);
-				})
 				.start();
 
 		// TODO: move the style stuff to the treemap.css
@@ -272,12 +281,39 @@ function readDataAndRender(json)
 		var node = div.selectAll(".cell")
 								.data(force.nodes())
 								.each(function(d,i) {set_args(d,i)});
-				
+					
+		// Resolves collisions between d and all other squares.
+		function collide(alpha) {
+			var quadtree = d3.geom.quadtree(d3.selectAll(".cell")[0]);
+			return function(d) {
+						nx1 = d.x - FORCE_WIDTH / 2,
+						nx2 = d.x + FORCE_WIDTH / 2,
+						ny1 = d.y - FORCE_HEIGHT / 2,
+						ny2 = d.y + FORCE_HEIGHT / 2;
+				quadtree.visit(function(quad, x1, y1, x2, y2) {
+					if (quad.point && (quad.point !== d)) {
+						var x = Math.abs(d.x - quad.point.x),
+								y = Math.abs(d.y - quad.point.y);
+						if (x < FORCE_WIDTH && y < FORCE_HEIGHT) {
+							d.x = d.x < quad.point.x ? d.x - x : d.x + x;
+							d.y = d.y < quad.point.y ? d.y - y : d.y + y;
+							quad.point.x = d.x < quad.point.x ? quad.point.x  + x : d.x - x;
+							quad.point.y = d.y < quad.point.y ? quad.point.y + y : quad.point.y - y;
+						}
+					}
+					return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+				});
+			};
+		}
+		
 		// define tick function for the force layout
 		function tick() {
 		
-			// keep the elements inside the bounds of the iframe
-			node.attr("x", function(d) { return d.x = Math.max(FORCE_WIDTH / 2, Math.min(w - FORCE_WIDTH / 2, d.x)); })
+			//TODO: keep the elements from overlapping the links
+			
+			// keep the elements from overlapping and keep them inside the bounds of the iframe
+			node.each(collide(1))
+					.attr("x", function(d) { return d.x = Math.max(FORCE_WIDTH / 2, Math.min(w - FORCE_WIDTH / 2, d.x)); })
 					.attr("y", function(d) { return d.y = Math.max(FORCE_HEIGHT / 2, Math.min(h - FORCE_HEIGHT / 2, d.y)); })
 					
 			link.attr("x1", function(d) { return d.source.x; })
@@ -287,7 +323,7 @@ function readDataAndRender(json)
 			
 			
 			node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-		}						
+		}
 }				
 
 function calculateForceLinks() {
