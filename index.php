@@ -138,6 +138,7 @@
                 $(".zoomButton").click(function() {
                     zoomOnClick(this.id);
                 });
+								
                 initialize();   // The function that starts the whole thing
             });
         </script>

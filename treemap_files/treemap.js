@@ -3,8 +3,44 @@
  * Libraries used: jQuery v1.9.1, D3 v3.0.8
  * 
  * treemap.js: Handles rendering of treemap visualization
+ *
+ * The exploding treemap combines the treemap layout with 
+ * a force-directed layout and toggles between them using
+ * d3 transitions. The force-directed layout represents the
+ * contagion pathway, while the treemap shows the market share
+ * of each bank. 
  */
  
+// resizing constants for the force layout
+var FORCE_WIDTH = 150;
+var FORCE_HEIGHT = 80;
+
+// dimensions of the enclosing iframe
+// TODO: these should be pulled from the parent instead, so that the
+//       dimensions change as the iframe changes		
+var w = 750;
+var h = 500;
+var color = d3.scale.negativeZeroPositive;
+var gradientAngle = d3.scale.negativeZeroPositiveGradient;
+
+//ColorPicker()
+var entThreshold;
+var entPod;
+
+ /* when generating the layouts, the second will always override
+  * arguments of the first. To preserve arguments from both, they
+	* are temporarily stored in the args array until they can be 
+	* re-added to the html elements. Once arguments from both 
+	* layouts are in place, switching between them is done by 
+	* altering elements directly based on their stored arguments.
+	* This eliminates the need to recompute the layouts when 
+	* switching between views, and allows the use of d3 transitions,
+	* which draw smooth transitions between attributes with discernable
+	* ranges, such as color or position.
+	*
+	* TODO: make a function to create this array dynamically, so the
+	*       a variable number of data objects can be created
+	*/
 var args = [
 						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
 						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0},
@@ -15,19 +51,10 @@ var args = [
 						{x: 0, y: 0, w: 0, h: 0, key: 0, value: 0}
 						];
 
+// holds the links for the force-directed layout
 var links;
-						
-var w = 750;
-var h = 500;
-var color = d3.scale.negativeZeroPositive;
-var gradientAngle = d3.scale.negativeZeroPositiveGradient;
 
-//ColorPicker()
-var entThreshold;
-var entPod;
-
-var mode = 0;
-
+// basic treemap layout
 var treemap = d3.layout.treemap()
         .size([w, h])
         .children(function(d) {
@@ -37,14 +64,16 @@ var treemap = d3.layout.treemap()
 						return Math.abs(d.value);
 				})
         .sticky(false);
-				
+
+// basic force layout
 var force = d3.layout.force()
 								.size([w, h])
 								.charge(-2000)
 								.linkDistance(300)
-								.on("end", function() {
-										// set the locations determined by the force layout
-										d3.selectAll(".cell")
+								.on("end", function(d) {
+							
+									// set the locations determined by the force layout
+									d3.selectAll(".cell")
 											.call(set_force)
 								})				
 
@@ -59,10 +88,12 @@ var svg = d3.select("body").insert("svg","#chart")
 							.attr("width",w)
 							.attr("height",h)
 							.style("position","absolute")
+
 							
 function toggleTreeMap() {
   if (parent.isTreemap === 0) {
 
+				// hide the links and then move the cells back in postion
 				d3.selectAll("line")
 					.transition()
 							.each("end", function() {
@@ -75,9 +106,9 @@ function toggleTreeMap() {
 								.call(hide_links)
 	
           parent.isTreemap = 1;
-  }
-    else {
+  } else {
 								
+					// move the cells to their exploded position and then draw links
 					d3.selectAll(".cell")
              .transition()
 							 .each("end", function() {
@@ -93,6 +124,72 @@ function toggleTreeMap() {
     }   
 }
 
+function toggleTicker() {
+		
+		if(parent.isTreemap === 0) {
+		
+				// if links are shown, hide them, recalculate, and draw new links
+				d3.selectAll("line")
+					.transition()
+						.each("end", function() {
+								calculateForceLinks();
+								
+								svg.selectAll("line")
+											.data(links)
+										.exit().remove()
+								
+								svg.selectAll("line")
+											.data(links)
+										.enter().append("line")
+											.style("stroke","#FC8D59")
+											.style("stroke-width", "1.5px")
+											.style("opacity",0)
+								
+								d3.selectAll("line")
+									.transition()
+										.duration(1000)
+											.call(show_links)
+						})
+						.duration(500)
+							.call(hide_links)
+		} else {
+		
+			// if links are not shown, just recalculate
+			calculateForceLinks();
+		
+			svg.selectAll("line")
+						.data(links)
+					.exit().remove()
+			
+			svg.selectAll("line")
+						.data(links)
+					.enter().append("line")
+						.style("stroke","#FC8D59")
+						.style("stroke-width", "1.5px")
+						.style("opacity",0)
+					
+		}
+		
+		if(parent.isZoom === 1) {
+			
+				// change the background color and relative DDM of each cell
+				div.selectAll(".cell")
+                .transition()
+                .duration(500)
+                .style("background", function(d,i) {
+									return colorPickerLvl3(i);
+								})
+								
+				div.selectAll(".cell")
+								.html(function(d,i) {
+                  return "<div id=title>" + d.key + "</div>" + 
+												 "<div id=body> Market Cap:" + Math.abs(d.value) + 
+												 "B <br> Relative DDM:" + getDDM(i) + 
+												 "<br> DDM Threshold: 0.2 </div>";
+								});
+		}
+		
+}
 function reRender() {
     readDataAndRender(parent.profileListJSON);
     parent.gTreemapPageCompleted = true;
@@ -145,19 +242,23 @@ function readDataAndRender(json)
 						}
 				});
 
-		// hardcoded links for now, replace this when you get real data!
-		links = [{source: 0, target: 1},{source: 0, target: 3},{source: 1, target: 2}];
+		// get the links for the force layout
+		links = calculateForceLinks();
 		
-		// start the force layout. It will calculate final positions in the backgroung
+		// start the force layout. It will calculate final positions in the background
 		force.nodes(d3.selectAll(".cell")[0])
 				.links(links)
 				.on("tick", tick)
+				.on("start", function() {
+						// runs for 2.5 sec; contagion graph is unavaible until completion
+						window.setTimeout(force.stop, 2500);
+				})
 				.start();
 
 		// TODO: move the style stuff to the treemap.css
 		// initialize the links
 		var link = svg.selectAll("line")
-									.data(force.links())
+									.data(links)
 								.enter().append("line")
 									.attr("x1", function(d) { return d.source.x; })
 									.attr("y1", function(d) { return d.source.y; })
@@ -174,15 +275,28 @@ function readDataAndRender(json)
 				
 		// define tick function for the force layout
 		function tick() {
-			link
-					.attr("x1", function(d) { return d.source.x; })
+		
+			// keep the elements inside the bounds of the iframe
+			node.attr("x", function(d) { return d.x = Math.max(FORCE_WIDTH / 2, Math.min(w - FORCE_WIDTH / 2, d.x)); })
+					.attr("y", function(d) { return d.y = Math.max(FORCE_HEIGHT / 2, Math.min(h - FORCE_HEIGHT / 2, d.y)); })
+					
+			link.attr("x1", function(d) { return d.source.x; })
 					.attr("y1", function(d) { return d.source.y; })
 					.attr("x2", function(d) { return d.target.x; })
 					.attr("y2", function(d) { return d.target.y; });
-	
+			
+			
 			node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 		}						
 }				
+
+function calculateForceLinks() {
+
+		// hardcoded links for now, replace this when you get real data!
+		links = [{source: 0, target: 1},{source: 0, target: 3},{source: 1, target: 2}];
+		
+		return links;
+}
 
 function colorPickerLvl0(t) {
     entThreshold = parent.visualizationData[t].goal;
@@ -328,8 +442,8 @@ function set_treemap() {
 function set_force() {
 		
     this.each(function(d) {
-				d.forcew = 150;
-				d.forceh = 80;
+				d.forcew = FORCE_WIDTH;
+				d.forceh = FORCE_HEIGHT;
 				d.forcex = d.x - d.forcew/2
 				d.forcey = d.y - d.forceh/2
 			})
